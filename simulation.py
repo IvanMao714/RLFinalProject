@@ -4,6 +4,7 @@ import timeit
 import numpy as np
 import torch
 import traci
+from soupsieve import select
 
 from RLfinal.envir.generator import TrafficGenerator
 from RLfinal.memory import Memory
@@ -204,10 +205,11 @@ class Simulation:
         """
         Decide wheter to perform an explorative or exploitative action, according to an epsilon-greedy policy
         """
-        if random.random() < self._epsilon:
-            return random.randint(0, self._num_actions - 1)  # random action
-        else:
-            return np.argmax(self._Agent.predict_one(state))  # the best action given the current state
+        # if random.random() < self._epsilon:
+        #     return random.randint(0, self._num_actions - 1)  # random action
+        # else:
+        #     return np.argmax(self._Agent.predict_one(state))  # the best action given the current state
+        return self._Agent.select_action(state, False)
 
     # utils function
 

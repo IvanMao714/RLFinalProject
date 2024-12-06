@@ -1,11 +1,14 @@
 import datetime
 import os
 from shutil import copyfile
+
+from RLfinal.agent.SACAgent import SACAgent
+
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # Temporary workaround
 
 # from numpy.distutils.command.config import config
 
-from RLfinal.agent.Q_Net import DQNAgent
+from RLfinal.agent.DQNAgent import DQNAgent
 from RLfinal.config.utils import import_configuration
 from RLfinal.memory import Memory
 from RLfinal.plot.visualization import save_data_and_plot
@@ -28,8 +31,10 @@ class Trainer:
         self.path = set_train_path(self.config['models_path_name'], model_name)
         self.model_name = model_name
         self.memory = Memory(self.config)
-        if model_name == "DQN" or model_name == "DDQN":
+        if model_name == "DQN" or model_name == "DDQN" or model_name == "DDDQN":
             self.agent = DQNAgent(self.config, self.memory)
+        elif model_name == "SAC":
+            self.agent = SACAgent(self.config, self.memory)
 
         self.simulation = Simulation(self.config, self.sumo_cmd, self.agent, self.memory)
 
@@ -48,7 +53,7 @@ class Trainer:
             if episode % 20 == 0:
                 self.agent.save(self.model_name, episode, self.path)
                 # print(self.simulation.reward_store)
-
+        self.agent.save(self.model_name, episode, self.path)
         save_data_and_plot(data=self.simulation.reward_store, filename='reward', xlabel='Episode', ylabel='Cumulative negative reward', path=self.path,dpi=96)
         save_data_and_plot(data=self.simulation.cumulative_wait_store, filename='delay', xlabel='Episode',
                                          ylabel='Cumulative delay (s)', path=self.path,dpi=96)
@@ -65,4 +70,4 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    Trainer("DDQN").train()
+    Trainer("SAC").train()

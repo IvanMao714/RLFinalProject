@@ -1,10 +1,11 @@
 import copy
 import numpy as np
 import torch
-from torch import nn
+
 import torch.nn.functional as F
 
-from RLfinal.agent.utils import build_net
+from RLfinal.agent.utils.Q_Net import DuelingQNetwork, QNetwork
+
 
 class DQNAgent(object):
     def __init__(self,config, memory):
@@ -111,23 +112,6 @@ class DQNAgent(object):
             target_param.data.copy_(self.polyak_factor * param.data + (1 - self.polyak_factor) * target_param.data)
         # print("1111111111111")
 
-    # def predict_batch(self, states):
-    #     """
-    #     Predict Q-values for a batch of states.
-    #
-    #     Args:
-    #         states (torch.Tensor): A batch of states. Shape: (batch_size, state_dim).
-    #
-    #     Returns:
-    #         torch.Tensor: Predicted Q-values for each state and action. Shape: (batch_size, action_dim).
-    #     """
-    #     # Ensure the states are on the correct device
-    #     states = states.to(self.device)
-    #
-    #     # Perform a forward pass through the Q-network
-    #     q_values = self.q_network(states)
-    #
-    #     return q_values
     def predict_one(self, state):
         if not isinstance(state, torch.Tensor):
             state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
@@ -145,40 +129,3 @@ class DQNAgent(object):
             torch.load(path + "{}_{}.pth".format(name, steps), map_location=self.device))
 
 
-class QNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_layers):
-        """
-        Standard Q-network with fully connected layers.
-        """
-        super(QNetwork, self).__init__()
-        layers = [state_dim] + hidden_layers + [action_dim]
-        self.q_layers = build_net(layers, nn.ReLU, nn.Identity)
-
-    def forward(self, state):
-        """
-        Forward pass to compute Q-values for all actions.
-        """
-        return self.q_layers(state)
-
-
-class DuelingQNetwork(nn.Module):
-    def __init__(self, state_dim, action_dim, hidden_layers):
-        """
-        Dueling Q-network with separate streams for state-value and advantage.
-        """
-        super(DuelingQNetwork, self).__init__()
-        layers = [state_dim] + hidden_layers
-        self.shared_hidden = build_net(layers, nn.ReLU, nn.ReLU)
-        self.value_stream = nn.Linear(hidden_layers[-1], 1)
-        self.advantage_stream = nn.Linear(hidden_layers[-1], action_dim)
-
-    def forward(self, state):
-        """
-        Forward pass to compute Q-values using dueling architecture.
-        Q(s, a) = V(s) + A(s, a) - mean(A(s, a))
-        """
-        shared_representation = self.shared_hidden(state)
-        state_value = self.value_stream(shared_representation)
-        advantage = self.advantage_stream(shared_representation)
-        q_values = state_value + (advantage - torch.mean(advantage, dim=-1, keepdim=True))
-        return q_values
