@@ -8,17 +8,19 @@ def import_configuration(model, type):
     Read the config file regarding the training and import its content
     """
     base_dir = os.path.dirname(os.path.abspath(__file__))
+    print(type)
 
     # Construct the absolute path to the config file
     simulation_config_path = os.path.join(base_dir, 'simulation_settings.ini')
     base_config_path = os.path.join(base_dir, 'base_settings.ini')
     training_config_path = os.path.join(base_dir, 'training_settings.ini')
+    test_config_path = os.path.join(base_dir, 'test_settings.ini')
 
     config = {}
     content = configparser.ConfigParser()
     content.read(simulation_config_path)
 
-    config['gui'] = content['simulation'].getboolean('gui')
+    # config['gui'] = content['simulation'].getboolean('gui')
     config['total_episodes'] = content['simulation'].getint('total_episodes')
     config['max_steps'] = content['simulation'].getint('max_steps')
     config['n_cars_generated'] = content['simulation'].getint('n_cars_generated')
@@ -37,32 +39,40 @@ def import_configuration(model, type):
     config['epsilon'] = content['agent'].getfloat('epsilon')
 
 
+
+    content.read(training_config_path)
     if type == 'train':
-        content.read(training_config_path)
-        if model == 'DQN':
-            config['learning_rate'] = content['dqn_model'].getfloat('learning_rate')
-            config['training_epochs'] = content['dqn_model'].getint('training_epochs')
-            config['use_double_dqn'] = content['dqn_model'].getboolean('use_double_dqn')
-            config['use_dueling_network'] = content['dqn_model'].getboolean('use_dueling_network')
-            config['hidden_layers'] = ast.literal_eval(content['dqn_model']['hidden_layers'])
-        if model == 'DDQN':
-            config['learning_rate'] = content['ddqn_model'].getfloat('learning_rate')
-            config['training_epochs'] = content['ddqn_model'].getint('training_epochs')
-            config['use_double_dqn'] = content['ddqn_model'].getboolean('use_double_dqn')
-            config['use_dueling_network'] = content['ddqn_model'].getboolean('use_dueling_network')
-            config['hidden_layers'] = ast.literal_eval(content['ddqn_model']['hidden_layers'])
-        if model == 'DDDQN':
-            config['learning_rate'] = content['dddqn_model'].getfloat('learning_rate')
-            config['training_epochs'] = content['dddqn_model'].getint('training_epochs')
-            config['use_double_dqn'] = content['dddqn_model'].getboolean('use_double_dqn')
-            config['use_dueling_network'] = content['dddqn_model'].getboolean('use_dueling_network')
-            config['hidden_layers'] = ast.literal_eval(content['dddqn_model']['hidden_layers'])
-        if model == 'SAC':
-            config['learning_rate'] = content['sac_model'].getfloat('learning_rate')
-            config['training_epochs'] = content['sac_model'].getint('training_epochs')
-            config['hidden_layers'] = ast.literal_eval(content['sac_model']['hidden_layers'])
-            config['adaptive_alpha'] = content['sac_model'].getboolean('adaptive_alpha')
-            config['alpha'] = content['sac_model'].getfloat('alpha')
+        config['gui'] = content['simulation'].getboolean('gui')
+    if model == 'DQN':
+        config['learning_rate'] = content['dqn_model'].getfloat('learning_rate')
+        config['training_epochs'] = content['dqn_model'].getint('training_epochs')
+        config['use_double_dqn'] = content['dqn_model'].getboolean('use_double_dqn')
+        config['use_dueling_network'] = content['dqn_model'].getboolean('use_dueling_network')
+        config['hidden_layers'] = ast.literal_eval(content['dqn_model']['hidden_layers'])
+    if model == 'DDQN':
+        config['learning_rate'] = content['ddqn_model'].getfloat('learning_rate')
+        config['training_epochs'] = content['ddqn_model'].getint('training_epochs')
+        config['use_double_dqn'] = content['ddqn_model'].getboolean('use_double_dqn')
+        config['use_dueling_network'] = content['ddqn_model'].getboolean('use_dueling_network')
+        config['hidden_layers'] = ast.literal_eval(content['ddqn_model']['hidden_layers'])
+    if model == 'DDDQN':
+        config['learning_rate'] = content['dddqn_model'].getfloat('learning_rate')
+        config['training_epochs'] = content['dddqn_model'].getint('training_epochs')
+        config['use_double_dqn'] = content['dddqn_model'].getboolean('use_double_dqn')
+        config['use_dueling_network'] = content['dddqn_model'].getboolean('use_dueling_network')
+        config['hidden_layers'] = ast.literal_eval(content['dddqn_model']['hidden_layers'])
+    if model == 'SAC':
+        config['learning_rate'] = content['sac_model'].getfloat('learning_rate')
+        config['training_epochs'] = content['sac_model'].getint('training_epochs')
+        config['hidden_layers'] = ast.literal_eval(content['sac_model']['hidden_layers'])
+        config['adaptive_alpha'] = content['sac_model'].getboolean('adaptive_alpha')
+        config['alpha'] = content['sac_model'].getfloat('alpha')
+    if type == 'test':
+        content.read(test_config_path)
+        print(content)
+        config['gui'] = True
+        config['episode_seed'] = content['simulation'].getint('episode_seed')
+
 
     # print(config)
     return config

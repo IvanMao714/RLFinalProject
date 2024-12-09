@@ -1,4 +1,5 @@
 import copy
+import os
 
 import numpy as np
 import torch
@@ -110,8 +111,8 @@ class SACAgent(object):
 
     def load(self, name, steps, path):
         self.actor.load_state_dict(
-            torch.load(path + "sacd_actor_{}_{}.pth".format(name, steps), map_location=self.device))
+            torch.load(os.path.join(path,"sacd_actor_{}_{}.pth".format(name, steps)), map_location=self.device))
         self.q_critic.load_state_dict(
-            torch.load(path + "sacd_critic_{}_{}.pth".format(name, steps), map_location=self.device))
+            torch.load(os.path.join(path,"sacd_critic_{}_{}.pth".format(name, steps)), map_location=self.device))
         # self.actor.load_state_dict(torch.load(f"./model/sacd_actor_{timestep}_{EnvName}.pth", map_location=self.dvc))
         # self.q_critic.load_state_dict(torch.load(f"./model/sacd_critic_{timestep}_{EnvName}.pth", map_location=self.dvc))

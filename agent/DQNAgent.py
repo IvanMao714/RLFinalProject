@@ -1,4 +1,6 @@
 import copy
+import os.path
+
 import numpy as np
 import torch
 
@@ -124,8 +126,8 @@ class DQNAgent(object):
 
     def load(self, name, steps, path):
         self.q_network.load_state_dict(
-            torch.load(path + "{}_{}.pth".format(name, steps), map_location=self.device))
+            torch.load(os.path.join(path,"{}_{}.pth".format(name, steps)), map_location=self.device))
         self.target_q_network.load_state_dict(
-            torch.load(path + "{}_{}.pth".format(name, steps), map_location=self.device))
+            torch.load(os.path.join(path,"{}_{}.pth".format(name, steps)), map_location=self.device))
 
 

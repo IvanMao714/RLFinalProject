@@ -12,7 +12,7 @@ from RLfinal.agent.DQNAgent import DQNAgent
 from RLfinal.config.utils import import_configuration
 from RLfinal.memory import Memory
 from RLfinal.plot.visualization import save_data_and_plot
-from RLfinal.simulation import Simulation
+from RLfinal.simulation import Training_Simulation
 from RLfinal.utils import set_sumo, set_train_path
 
 
@@ -36,7 +36,7 @@ class Trainer:
         elif model_name == "SAC":
             self.agent = SACAgent(self.config, self.memory)
 
-        self.simulation = Simulation(self.config, self.sumo_cmd, self.agent, self.memory)
+        self.simulation = Training_Simulation(self.config, self.sumo_cmd, self.agent, self.memory)
 
 
     def train(self):
@@ -54,10 +54,10 @@ class Trainer:
                 self.agent.save(self.model_name, episode, self.path)
                 # print(self.simulation.reward_store)
         self.agent.save(self.model_name, episode, self.path)
-        save_data_and_plot(data=self.simulation.reward_store, filename='reward', xlabel='Episode', ylabel='Cumulative negative reward', path=self.path,dpi=96)
-        save_data_and_plot(data=self.simulation.cumulative_wait_store, filename='delay', xlabel='Episode',
+        save_data_and_plot(data=self.simulation.reward_store, filename='reward', train_type='train',xlabel='Episode', ylabel='Cumulative negative reward', path=self.path,dpi=96)
+        save_data_and_plot(data=self.simulation.cumulative_wait_store, filename='delay', train_type='train', xlabel='Episode',
                                          ylabel='Cumulative delay (s)', path=self.path,dpi=96)
-        save_data_and_plot(data=self.simulation.avg_queue_length_store, filename='queue', xlabel='Episode',
+        save_data_and_plot(data=self.simulation.avg_queue_length_store, filename='queue', train_type='train', xlabel='Episode',
                                          ylabel='Average queue length (vehicles)', path=self.path,dpi=96)
         print("\n----- Start time:", timestamp_start)
         print("----- End time:", datetime.datetime.now())
@@ -70,4 +70,4 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    Trainer("SAC").train()
+    Trainer("DDQN").train()
