@@ -4,7 +4,7 @@ import math
 import numpy as np
 import torch
 
-from RLfinal.agent.utils.Actor import Actor
+from agent.utils.Actor import Actor
 
 
 class PPOAgent():
