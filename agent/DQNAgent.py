@@ -6,7 +6,9 @@ import torch
 
 import torch.nn.functional as F
 
+
 from agent.utils.Q_Net import DuelingQNetwork, QNetwork
+
 
 
 class DQNAgent(object):

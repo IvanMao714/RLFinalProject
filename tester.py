@@ -1,3 +1,4 @@
+
 # import os
 # import timeit
 # from distutils.command.config import config
@@ -65,6 +66,7 @@ class Tester:
         self.model_name = model_name
         self.memory = None
 
+
         # 根据不同模型类型选择不同的智能体与模型路径
         if model_name in ["DQN", "DDQN", "DDDQN"]:
             self.model_path = os.path.join(os.getcwd(), 'models', model_name, model_name + "_1")
@@ -72,9 +74,11 @@ class Tester:
             # 假设您在训练阶段最后保存时使用了step=50作为示例，如需修改请对齐训练保存的步数
             self.agent.load(model_name, 50, self.model_path)
 
+
         elif model_name == "SAC":
             self.model_path = os.path.join(os.getcwd(), 'models', model_name, model_name + "_1")
             self.agent = SACAgent(self.config, self.memory)
+
             self.agent.load(model_name, 50, self.model_path)
 
         elif model_name == "Q-learning":
@@ -86,12 +90,14 @@ class Tester:
         else:
             raise ValueError("Unknown model name: {}".format(model_name))
 
+
         self.simulation = Testing_Simulation(self.config, self.sumo_cmd, self.agent)
 
     def run(self):
         print('\n----- Test episode')
         simulation_time = self.simulation.run(self.config['episode_seed'])  # run the simulation
         print('Simulation time:', simulation_time, 's')
+
 
         # 保存并绘制测试数据
         save_data_and_plot(data=self.simulation.reward_episode,
@@ -115,3 +121,4 @@ if __name__ == '__main__':
     # 将此处修改为所需的模型名称，例如 Q-learning
     test = Tester('Q-learning')
     test.run()
+

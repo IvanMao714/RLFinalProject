@@ -4,6 +4,7 @@ import timeit
 import numpy as np
 import torch
 import traci
+
 # from soupsieve import select
 
 from envir.generator import TrafficGenerator
@@ -39,6 +40,7 @@ class Training_Simulation:
         self._cumulative_wait_store = []
         self._avg_queue_length_store = []
         self._epsilon = config['epsilon']
+
 
 
     # def run(self, episode):
@@ -122,17 +124,21 @@ class Training_Simulation:
         start_time = timeit.default_timer()
 
         # generate route file
+
         self._TrafficGen.generate_routefile(seed=episode)
         traci.start(self._sumo_cmd)
         print("Simulating...")
 
+
         # 初始化
+
         self._step = 0
         self._waiting_times = {}
         self._sum_neg_reward = 0
         self._sum_queue_length = 0
         self._sum_waiting_time = 0
         old_total_wait = 0
+
         old_state = None
         old_action = None
 
@@ -171,11 +177,14 @@ class Training_Simulation:
             self._simulate(self._green_duration)
 
             # 更新记录
+
             old_state = current_state
             old_action = action
             old_total_wait = current_total_wait
 
+
             # 累积奖励（仅在需要分析时才记录负奖励）
+
             self._sum_neg_reward += reward
 
         self._save_episode_stats()
@@ -185,14 +194,18 @@ class Training_Simulation:
 
         print("Training...")
         start_time = timeit.default_timer()
+
         # 对于Q-learning，不需要在episode结束后批量训练，已经在每步更新了
         # 因此注释掉以下训练循环
         # for _ in range(self._training_epochs):
         #     self._Agent.train() # 不需要
 
+
         training_time = round(timeit.default_timer() - start_time, 1)
 
         return simulation_time, training_time
+
+
 
     def _simulate(self, steps_todo):
         """
@@ -590,6 +603,7 @@ class Testing_Simulation:
 
         return simulation_time
 
+
     # def run(self, episode):
     #     """
     #     Runs an episode of simulation using Q-learning:
@@ -669,6 +683,7 @@ class Testing_Simulation:
     #     training_time = round(timeit.default_timer() - start_time, 1)
     #
     #     return simulation_time, training_time
+
 
     def _simulate(self, steps_todo):
         """

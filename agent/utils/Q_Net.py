@@ -1,11 +1,9 @@
 import torch
 from torch import nn
 
-<<<<<<< HEAD
-from RLfinal.agent.utils.utils import build_net
-=======
+
 from agent.utils.utils import build_net
->>>>>>> 7ea8810 (Jinfan Xiang updated Q-learning model)
+
 
 
 class QNetwork(nn.Module):

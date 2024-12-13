@@ -1,3 +1,4 @@
+
 # import datetime
 # import os
 # from shutil import copyfile
@@ -76,9 +77,11 @@
 
 
 
+
 import datetime
 import os
 from shutil import copyfile
+
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # Temporary workaround
 
@@ -91,20 +94,26 @@ from plot.visualization import save_data_and_plot
 from simulation import Training_Simulation
 from utils import set_sumo, set_train_path
 
+
 class Trainer:
 
     def __init__(self, model_name):
+
         self.config = import_configuration(model_name, 'train')
+
         self.sumo_cmd = set_sumo(self.config['gui'], self.config['sumocfg_file_name'], self.config['max_steps'])
         self.path = set_train_path(self.config['models_path_name'], model_name)
         self.model_name = model_name
         self.memory = Memory(self.config)
 
+
         # 根据模型名称选择相应的智能体
+
         if model_name == "DQN" or model_name == "DDQN" or model_name == "DDDQN":
             self.agent = DQNAgent(self.config, self.memory)
         elif model_name == "SAC":
             self.agent = SACAgent(self.config, self.memory)
+
         elif model_name == "Q-learning":
             # 直接使用config创建QLearningAgent
             self.agent = QLearningAgent(self.config)
@@ -115,16 +124,20 @@ class Trainer:
         # 请确保在 Training_Simulation 中，对于 Q-learning 是在每步环境交互后就直接调用 self.agent.train(...)
         # 而不是像 DQN 那样先存储在 memory 再批量取样训练。
 
+
     def train(self):
         episode = 0
         timestamp_start = datetime.datetime.now()
 
         while episode < self.config['total_episodes']:
             print('\n----- Episode', str(episode + 1), 'of', str(self.config['total_episodes']))
+
+
             simulation_time, training_time = self.simulation.run(episode)  # run the simulation
             print('Simulation time:', simulation_time, 's - Training time:', training_time, 's - Total:',
                   round(simulation_time + training_time, 1), 's')
             episode += 1
+
 
             # 定期保存模型
             if episode % 20 == 0:
@@ -158,10 +171,13 @@ class Trainer:
                            path=self.path,
                            dpi=96)
 
+
         print("\n----- Start time:", timestamp_start)
         print("----- End time:", datetime.datetime.now())
         print("----- Session info saved at:", self.path)
 
 
+
 if __name__ == '__main__':
     Trainer("Q-learning").train()
+

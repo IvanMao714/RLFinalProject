@@ -2,11 +2,9 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-<<<<<<< HEAD
-from RLfinal.agent.utils.utils import build_net
-=======
+
 from agent.utils.utils import build_net
->>>>>>> 7ea8810 (Jinfan Xiang updated Q-learning model)
+
 
 
 class Actor(nn.Module):
