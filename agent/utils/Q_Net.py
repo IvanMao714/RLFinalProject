@@ -1,7 +1,9 @@
 import torch
 from torch import nn
 
-from RLfinal.agent.utils.utils import build_net
+
+from agent.utils.utils import build_net
+
 
 
 class QNetwork(nn.Module):

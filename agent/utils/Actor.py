@@ -2,7 +2,9 @@ import torch
 import torch.nn.functional as F
 import torch.nn as nn
 
-from RLfinal.agent.utils.utils import build_net
+
+from agent.utils.utils import build_net
+
 
 
 class Actor(nn.Module):
