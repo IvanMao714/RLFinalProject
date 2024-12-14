@@ -20,7 +20,7 @@ PHASE_EWL_GREEN = 6  # action 3 code 11
 PHASE_EWL_YELLOW = 7
 
 class Training_Simulation:
-    def __init__(self, config, sumo_cmd, agent, memory):
+    def __init__(self, config, sumo_cmd, agent, memory, model_name):
         self._Memory = memory
         self._Agent =  agent
         self._TrafficGen = TrafficGenerator(config['max_steps'],config['n_cars_generated'])
@@ -40,77 +40,164 @@ class Training_Simulation:
         self._avg_queue_length_store = []
         self._epsilon = config['epsilon']
 
+        self.model_name = model_name
+
 
     def run(self, episode):
         """
         Runs an episode of simulation, then starts a training session
         """
-        start_time = timeit.default_timer()
+        if self.model_name == 'Q-learning':
+            start_time = timeit.default_timer()
 
-        # first, generate the route file for this simulation and set up sumo
-        self._TrafficGen.generate_routefile(seed=episode)
-        traci.start(self._sumo_cmd)
-        print("Simulating...")
+            # generate route file
 
-        # inits
-        self._step = 0
-        self._waiting_times = {}
-        self._sum_neg_reward = 0
-        self._sum_queue_length = 0
-        self._sum_waiting_time = 0
-        old_total_wait = 0
-        old_state = -1
-        old_action = -1
-        count=0
-        while self._step < self._max_steps:
-            # get current state of the intersection
-            current_state = self._get_state()
+            self._TrafficGen.generate_routefile(seed=episode)
+            traci.start(self._sumo_cmd)
+            print("Simulating...")
 
-            # calculate reward of previous action: (change in cumulative waiting time between actions)
-            # waiting time = seconds waited by a car since the spawn in the environment, cumulated for every car in incoming lanes
-            current_total_wait = self._collect_waiting_times()
-            reward = old_total_wait - current_total_wait
-            # reward = -current_total_wait
+            # 初始化
 
-            # saving the data into the memory
-            if self._step != 0:
-                self._Memory.add_sample((old_state, old_action, reward, current_state))
+            self._step = 0
+            self._waiting_times = {}
+            self._sum_neg_reward = 0
+            self._sum_queue_length = 0
+            self._sum_waiting_time = 0
+            old_total_wait = 0
 
-            # choose the light phase to activate, based on the current state of the intersection
-            action = self._choose_action(current_state)
+            old_state = None
+            old_action = None
 
-            # if the chosen phase is different from the last phase, activate the yellow phase
-            if self._step != 0 and old_action != action:
-                self._set_yellow_phase(old_action)
-                self._simulate(self._yellow_duration)
+            while self._step < self._max_steps:
+                # 获取当前状态(80,)的one-hot向量
+                current_state = self._get_state()
+                # 将状态转换为整数索引
+                current_s = int(np.argmax(current_state))
 
-            # execute the phase selected before
-            self._set_green_phase(action)
-            self._simulate(self._green_duration)
+                # 计算上一步动作的奖励
+                current_total_wait = self._collect_waiting_times()
+                # reward = (old_total_wait - current_total_wait) if self._step > 0 else 0
+                reward = -(current_total_wait / max(len(self._waiting_times), 1)) if self._step > 0 else 0
 
-            # saving variables for later & accumulate reward
-            old_state = current_state
-            old_action = action
-            old_total_wait = current_total_wait
+                # 在执行动作前更新Q表(非第一步才更新，因为需要上一状态和动作)
+                if self._step > 0:
+                    # 将上一步的状态转为整数索引
+                    old_s = int(np.argmax(old_state))
+                    a = old_action
+                    r = reward
+                    s_next = current_s
+                    dw = (self._step >= self._max_steps - 1)  # 在最后一步设为True
 
-            # saving only the meaningful reward to better see if the agent is behaving correctly
-            # if reward < 0:
-            self._sum_neg_reward += reward
+                    # Q-learning 每步更新
+                    self._Agent.train(old_s, a, r, s_next, dw)
 
-        self._save_episode_stats()
-        print("Total reward:", self._sum_neg_reward)
-        traci.close()
-        simulation_time = round(timeit.default_timer() - start_time, 1)
+                # 选择本步动作
+                action = self._choose_action(current_state)
 
-        print("Training...")
-        start_time = timeit.default_timer()
-        # for _ in range(self._training_epochs):
-        #     self._replay()
+                # 如果选择的相位和上一相位不同，则先黄灯
+                if self._step > 0 and old_action is not None and old_action != action:
+                    self._set_yellow_phase(old_action)
+                    self._simulate(self._yellow_duration)
 
-        for _ in range(self._training_epochs):
-            # print(self._Memory.size_now())
-            self._Agent.train()
-        training_time = round(timeit.default_timer() - start_time, 1)
+                # 执行选择的相位(绿灯)
+                self._set_green_phase(action)
+                self._simulate(self._green_duration)
+
+                ######################debug#############
+                # print(
+                #     f"Step: {self._step}, Reward: {reward}, Old Total Wait: {old_total_wait}, Current Total Wait: {current_total_wait}")
+
+                # 更新记录
+
+                old_state = current_state
+                old_action = action
+                old_total_wait = current_total_wait
+
+                # 累积奖励（仅在需要分析时才记录负奖励）
+
+                self._sum_neg_reward += reward
+
+            self._save_episode_stats()
+            print("Total reward:", self._sum_neg_reward)
+            traci.close()
+            simulation_time = round(timeit.default_timer() - start_time, 1)
+
+            print("Training...")
+            start_time = timeit.default_timer()
+
+            # 对于Q-learning，不需要在episode结束后批量训练，已经在每步更新了
+            # 因此注释掉以下训练循环
+            # for _ in range(self._training_epochs):
+            #     self._Agent.train() # 不需要
+
+            training_time = round(timeit.default_timer() - start_time, 1)
+        else:
+            start_time = timeit.default_timer()
+
+            # first, generate the route file for this simulation and set up sumo
+            self._TrafficGen.generate_routefile(seed=episode)
+            traci.start(self._sumo_cmd)
+            print("Simulating...")
+
+            # inits
+            self._step = 0
+            self._waiting_times = {}
+            self._sum_neg_reward = 0
+            self._sum_queue_length = 0
+            self._sum_waiting_time = 0
+            old_total_wait = 0
+            old_state = -1
+            old_action = -1
+            count=0
+            while self._step < self._max_steps:
+                # get current state of the intersection
+                current_state = self._get_state()
+
+                # calculate reward of previous action: (change in cumulative waiting time between actions)
+                # waiting time = seconds waited by a car since the spawn in the environment, cumulated for every car in incoming lanes
+                current_total_wait = self._collect_waiting_times()
+                reward = old_total_wait - current_total_wait
+                # reward = -current_total_wait
+
+                # saving the data into the memory
+                if self._step != 0:
+                    self._Memory.add_sample((old_state, old_action, reward, current_state))
+
+                # choose the light phase to activate, based on the current state of the intersection
+                action = self._choose_action(current_state)
+
+                # if the chosen phase is different from the last phase, activate the yellow phase
+                if self._step != 0 and old_action != action:
+                    self._set_yellow_phase(old_action)
+                    self._simulate(self._yellow_duration)
+
+                # execute the phase selected before
+                self._set_green_phase(action)
+                self._simulate(self._green_duration)
+
+                # saving variables for later & accumulate reward
+                old_state = current_state
+                old_action = action
+                old_total_wait = current_total_wait
+
+                # saving only the meaningful reward to better see if the agent is behaving correctly
+                # if reward < 0:
+                self._sum_neg_reward += reward
+
+            self._save_episode_stats()
+            print("Total reward:", self._sum_neg_reward)
+            traci.close()
+            simulation_time = round(timeit.default_timer() - start_time, 1)
+
+            print("Training...")
+            start_time = timeit.default_timer()
+            # for _ in range(self._training_epochs):
+            #     self._replay()
+
+            for _ in range(self._training_epochs):
+                # print(self._Memory.size_now())
+                self._Agent.train()
+            training_time = round(timeit.default_timer() - start_time, 1)
 
         return simulation_time, training_time
 

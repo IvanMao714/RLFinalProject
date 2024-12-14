@@ -2,6 +2,7 @@ import datetime
 import os
 from shutil import copyfile
 
+from RLfinal.agent.QlearningAgent import QLearningAgent
 from RLfinal.agent.SACAgent import SACAgent
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # Temporary workaround
@@ -26,17 +27,23 @@ class Trainer:
         #     self.path = set_train_path(self.config['models_path_name'])
         # else:
         #     self.config = import_test_configuration(config_file='testing_ac_settings.ini')
-        self.config = import_configuration(model_name,'train')
+        self.config = import_configuration(model_name, 'train')
         self.sumo_cmd = set_sumo(self.config['gui'], self.config['sumocfg_file_name'], self.config['max_steps'])
         self.path = set_train_path(self.config['models_path_name'], model_name)
         self.model_name = model_name
         self.memory = Memory(self.config)
+
         if model_name == "DQN" or model_name == "DDQN" or model_name == "DDDQN":
             self.agent = DQNAgent(self.config, self.memory)
         elif model_name == "SAC":
             self.agent = SACAgent(self.config, self.memory)
+        elif model_name == "Q-learning":
+            # 直接使用config创建QLearningAgent
+            self.agent = QLearningAgent(self.config)
+        else:
+            raise ValueError("Unknown model name: {}".format(model_name))
 
-        self.simulation = Training_Simulation(self.config, self.sumo_cmd, self.agent, self.memory)
+        self.simulation = Training_Simulation(self.config, self.sumo_cmd, self.agent, self.memory, model_name)
 
 
     def train(self):
@@ -70,4 +77,4 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    Trainer("DDQN").train()
+    Trainer("Q-learning").train()
