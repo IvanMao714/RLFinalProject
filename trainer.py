@@ -2,6 +2,7 @@ import datetime
 import os
 from shutil import copyfile
 
+from RLfinal.agent.QLearningAgent import QLearningAgent
 from RLfinal.agent.SACAgent import SACAgent
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'  # Temporary workaround
@@ -35,6 +36,8 @@ class Trainer:
             self.agent = DQNAgent(self.config, self.memory)
         elif model_name == "SAC":
             self.agent = SACAgent(self.config, self.memory)
+        elif model_name == "Q-learning":
+            self.agent = QLearningAgent(self.config, self.memory)
 
         self.simulation = Training_Simulation(self.config, self.sumo_cmd, self.agent, self.memory)
 
@@ -70,4 +73,4 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    Trainer("DDQN").train()
+    Trainer("Q-learning").train()

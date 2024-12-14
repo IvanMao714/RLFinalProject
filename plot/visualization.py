@@ -30,7 +30,8 @@ def save_data_and_plot(data, filename,train_type, xlabel, ylabel, path, dpi):
 
 def mode_performance_comparison():
     # Directories and file names
-    file_names = ['plot_delay_data', 'plot_queue_data', 'plot_reward_data']
+    # file_names = ['plot_delay_data', 'plot_queue_data', 'plot_reward_data']
+    file_names = ['plot_delay_data']
     model_paths = ['../models/DQN/DQN_1', '../models/DDQN/DDQN_1', '../models/DDDQN/DDDQN_1', '../models/SAC/SAC_1']
 
     # Initialize a dictionary to store DataFrames
@@ -40,6 +41,7 @@ def mode_performance_comparison():
     for file in file_names:
         data_dict = {}
         for model_path in model_paths:
+            print(f'{file}: {model_path}')
             file_path = os.path.join(model_path, file + ".txt")
             model_name = os.path.basename(model_path)
             if os.path.exists(file_path):
@@ -47,6 +49,7 @@ def mode_performance_comparison():
                     data_dict[model_name] = [float(line.strip()) for line in f]
             else:
                 data_dict[model_name] = []  # Handle missing files with empty data
+            print(len(data_dict[model_name]))
         data_frames[file] = pd.DataFrame(data_dict)
     # print(data_frames)
     for file, df in data_frames.items():
@@ -58,6 +61,7 @@ def mode_performance_comparison():
         plt.ylabel(file.split('_')[1].title())
         plt.grid(True)
         plt.legend()
+        plt.savefig()
         plt.show()
 
 if __name__ == '__main__':
