@@ -89,7 +89,7 @@ from agent.SACAgent import SACAgent
 from agent.DQNAgent import DQNAgent
 from agent.QlearningAgent import QLearningAgent  # 引入修改后的QLearningAgent
 from config.utils import import_configuration
-from memory import Memory
+# from memory import Memory
 from plot.visualization import save_data_and_plot
 from simulation import Training_Simulation
 from utils import set_sumo, set_train_path
@@ -104,23 +104,23 @@ class Trainer:
         self.sumo_cmd = set_sumo(self.config['gui'], self.config['sumocfg_file_name'], self.config['max_steps'])
         self.path = set_train_path(self.config['models_path_name'], model_name)
         self.model_name = model_name
-        self.memory = Memory(self.config)
+        # self.memory = Memory(self.config)
 
 
         # 根据模型名称选择相应的智能体
 
-        if model_name == "DQN" or model_name == "DDQN" or model_name == "DDDQN":
-            self.agent = DQNAgent(self.config, self.memory)
-        elif model_name == "SAC":
-            self.agent = SACAgent(self.config, self.memory)
+        # if model_name == "DQN" or model_name == "DDQN" or model_name == "DDDQN":
+        #     self.agent = DQNAgent(self.config, self.memory)
+        # elif model_name == "SAC":
+        #     self.agent = SACAgent(self.config, self.memory)
 
-        elif model_name == "Q-learning":
+        if model_name == "Q-learning":
             # 直接使用config创建QLearningAgent
             self.agent = QLearningAgent(self.config)
         else:
             raise ValueError("Unknown model name: {}".format(model_name))
 
-        self.simulation = Training_Simulation(self.config, self.sumo_cmd, self.agent, self.memory)
+        self.simulation = Training_Simulation(self.config, self.sumo_cmd, self.agent)
         # 请确保在 Training_Simulation 中，对于 Q-learning 是在每步环境交互后就直接调用 self.agent.train(...)
         # 而不是像 DQN 那样先存储在 memory 再批量取样训练。
 

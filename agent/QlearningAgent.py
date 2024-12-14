@@ -11,24 +11,24 @@ class QLearningAgent():
         self.s_dim = config['num_states']
         self.Q = np.zeros((self.s_dim, self.a_dim))
 
-    def encode_state(self, state):
-        """
-        将一个 (80,) 形状的状态向量映射为单一整数索引。
-        假设 state 是 one-hot 编码的，即在80个位置中有一个位置为1，其余为0。
-        则此位置的下标即为状态索引。
-
-        Args:
-            state (np.ndarray): 当前状态，形状为 (80,) 的一维数组（one-hot向量）。
-
-        Returns:
-            int: 离散整数索引。
-        """
-        # 检查state的形状
-        if state.shape == (80,):
-            # 使用argmax获取one-hot向量中值为1的索引
-            return int(np.argmax(state))
-        else:
-            raise ValueError("State shape is not (80,). Received shape: {}".format(state.shape))
+    # def encode_state(self, state):
+    #     """
+    #     将一个 (80,) 形状的状态向量映射为单一整数索引。
+    #     假设 state 是 one-hot 编码的，即在80个位置中有一个位置为1，其余为0。
+    #     则此位置的下标即为状态索引。
+    #
+    #     Args:
+    #         state (np.ndarray): 当前状态，形状为 (80,) 的一维数组（one-hot向量）。
+    #
+    #     Returns:
+    #         int: 离散整数索引。
+    #     """
+    #     # 检查state的形状
+    #     if state.shape == (80,):
+    #         # 使用argmax获取one-hot向量中值为1的索引
+    #         return int(np.argmax(state))
+    #     else:
+    #         raise ValueError("State shape is not (80,). Received shape: {}".format(state.shape))
 
     # def select_action(self, s, deterministic):
     #     """

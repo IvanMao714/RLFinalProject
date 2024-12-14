@@ -8,7 +8,7 @@ import traci
 # from soupsieve import select
 
 from envir.generator import TrafficGenerator
-from memory import Memory
+# from memory import Memory
 
 # phase codes based on environment.net.xml
 PHASE_NS_GREEN = 0  # action 0 code 00
@@ -21,8 +21,8 @@ PHASE_EWL_GREEN = 6  # action 3 code 11
 PHASE_EWL_YELLOW = 7
 
 class Training_Simulation:
-    def __init__(self, config, sumo_cmd, agent, memory):
-        self._Memory = memory
+    def __init__(self, config, sumo_cmd, agent):
+
         self._Agent =  agent
         self._TrafficGen = TrafficGenerator(config['max_steps'],config['n_cars_generated'])
         self.epsilon = config['epsilon']
@@ -150,7 +150,8 @@ class Training_Simulation:
 
             # 计算上一步动作的奖励
             current_total_wait = self._collect_waiting_times()
-            reward = (old_total_wait - current_total_wait) if self._step > 0 else 0
+            # reward = (old_total_wait - current_total_wait) if self._step > 0 else 0
+            reward = -(current_total_wait / max(len(self._waiting_times), 1)) if self._step > 0 else 0
 
             # 在执行动作前更新Q表(非第一步才更新，因为需要上一状态和动作)
             if self._step > 0:
@@ -175,6 +176,10 @@ class Training_Simulation:
             # 执行选择的相位(绿灯)
             self._set_green_phase(action)
             self._simulate(self._green_duration)
+
+            ######################debug#############
+            print(
+                f"Step: {self._step}, Reward: {reward}, Old Total Wait: {old_total_wait}, Current Total Wait: {current_total_wait}")
 
             # 更新记录
 
@@ -230,6 +235,10 @@ class Training_Simulation:
         #     return random.randint(0, self._num_actions - 1)  # random action
         # else:
         #     return np.argmax(self._Agent.predict_one(state))  # the best action given the current state
+###########################debug##############################
+        action = self._Agent.select_action(state, False)
+        print(f"Step: {self._step}, Selected Action: {action}")
+#########################################################
         return self._Agent.select_action(state, False)
 
     # utils function
@@ -350,6 +359,11 @@ class Training_Simulation:
         """
         state = np.zeros(self._num_states)
         car_list = traci.vehicle.getIDList()
+
+###############################debug####################
+        print(f"Step: {self._step}, Number of Vehicles: {len(car_list)}")
+#########################################################
+
 
         for car_id in car_list:
             lane_pos = traci.vehicle.getLanePosition(car_id)
@@ -579,6 +593,9 @@ class Testing_Simulation:
             current_total_wait = self._collect_waiting_times()
             reward = old_total_wait - current_total_wait
 
+
+
+
             # choose the light phase to activate, based on the current state of the intersection
             action = self._choose_action(current_state)
 
@@ -715,6 +732,8 @@ class Testing_Simulation:
                 if car_id in self._waiting_times:  # a car that was tracked has cleared the intersection
                     del self._waiting_times[car_id]
         total_waiting_time = sum(self._waiting_times.values())
+
+
         return total_waiting_time
 
     def _choose_action(self, state):
@@ -824,6 +843,9 @@ class Testing_Simulation:
             if valid_car:
                 state[
                     car_position] = 1  # write the position of the car car_id in the state array in the form of "cell occupied"
+
+##############################debug###########################
+        print(f"Step: {self._step}, State: {state}")
 
         return state
 
