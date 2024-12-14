@@ -28,8 +28,7 @@ def import_configuration(model, type):
     config['yellow_duration'] = content['simulation'].getint('yellow_duration')
 
     content.read(base_config_path)
-    if model != 'Q-learning':
-        config['device'] = content['device'].get('device_type')
+    config['device'] = content['device'].get('device_type')
     config['models_path_name'] = content['dir']['models_path_name']
     config['sumocfg_file_name'] = content['dir']['sumocfg_file_name']
     config['memory_size_max'] = content['memory'].getint('memory_size_max')
@@ -68,12 +67,10 @@ def import_configuration(model, type):
         config['hidden_layers'] = ast.literal_eval(content['sac_model']['hidden_layers'])
         config['adaptive_alpha'] = content['sac_model'].getboolean('adaptive_alpha')
         config['alpha'] = content['sac_model'].getfloat('alpha')
-
     if model == 'Q-learning':
         config['learning_rate'] = content['Qlearning_model'].getfloat('learning_rate')
         config['training_epochs'] = content['Qlearning_model'].getint('training_epochs')
         config['gamma'] = content['Qlearning_model'].getfloat('gamma')
-        config['device'] = content['Qlearning_model'].get('device_type')
 
     if type == 'test':
         content.read(test_config_path)
