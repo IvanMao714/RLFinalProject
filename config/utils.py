@@ -67,19 +67,12 @@ def import_configuration(model, type):
         config['hidden_layers'] = ast.literal_eval(content['sac_model']['hidden_layers'])
         config['adaptive_alpha'] = content['sac_model'].getboolean('adaptive_alpha')
         config['alpha'] = content['sac_model'].getfloat('alpha')
-<<<<<<< HEAD
-=======
 
->>>>>>> d5a8b8530f7381253705494bfda1426b74cece67
     if model == 'Q-learning':
         config['learning_rate'] = content['Qlearning_model'].getfloat('learning_rate')
         config['training_epochs'] = content['Qlearning_model'].getint('training_epochs')
         config['gamma'] = content['Qlearning_model'].getfloat('gamma')
 
-<<<<<<< HEAD
-=======
-
->>>>>>> d5a8b8530f7381253705494bfda1426b74cece67
     if type == 'test':
         content.read(test_config_path)
         print(content)
