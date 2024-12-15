@@ -4,6 +4,17 @@ import torch
 
 class QLearningAgent():
     def __init__(self, config):
+        """
+        Initialize the Q-learning agent with a Q-table and hyperparameters.
+
+        Args:
+            config (dict): Configuration dictionary containing:
+                - num_actions (int): Number of possible actions.
+                - learning_rate (float): Learning rate for Q-value updates.
+                - gamma (float): Discount factor for future rewards.
+                - epsilon (float): Exploration probability for epsilon-greedy policy.
+                - num_states (int): Number of possible states.
+        """
         self.a_dim = config['num_actions']
         self.lr = config['learning_rate']
         self.gamma = config['gamma']
@@ -13,20 +24,36 @@ class QLearningAgent():
 
 
     def select_action(self, state, deterministic):
-        # 如果 state 是 numpy 数组(长度为80)
+        """
+        Select an action based on the current policy using epsilon-greedy or deterministic selection.
+
+        Args:
+            state (np.ndarray or int): The current state.
+                - If numpy array, it should represent a one-hot encoded state.
+                - If integer, it represents a state index.
+            deterministic (bool): Whether to select actions deterministically.
+
+        Returns:
+            int: The selected action index.
+        """
+        # Convert the state to an integer index if it is a numpy array
         if isinstance(state, np.ndarray):
-            # 将 (80,) 的状态向量转换为整数索引
+            
             s = int(np.argmax(state))
         else:
-            # 如果 state 本身就是整数(根据实际情况使用)
+            
             s = int(state)
 
         if deterministic:
+            # Deterministic policy: choose the action with the highest Q-value
             return np.argmax(self.Q[s, :])
         else:
+            # Epsilon-greedy policy
             if np.random.uniform(0, 1) < self.epsilon:
+                # Random action for exploration
                 return np.random.randint(0, self.a_dim)
             else:
+                # Greedy action based on the Q-table
                 return np.argmax(self.Q[s, :])
 
     def train(self, s, a, r, s_next, dw):
@@ -39,8 +66,10 @@ class QLearningAgent():
             s_next (int): next state
             dw (bool): done flag (True if episode terminated)
         """
-        Q_sa = self.Q[s, a]
+        Q_sa = self.Q[s, a] # Current Q-value for state-action pair
+        # Target Q-value using the Bellman equation
         target_Q = r + (1 - dw) * self.gamma * np.max(self.Q[s_next, :])
+        # Update the Q-value with the learning rate
         self.Q[s, a] += self.lr * (target_Q - Q_sa)
 
     def predict_one(self, state):
@@ -66,8 +95,10 @@ class QLearningAgent():
         """
         if not os.path.exists(path):
             os.makedirs(path)
+
+        # Construct the file path and save the Q-table using PyTorch
         save_path = os.path.join(path, "{}_{}.pth".format(name, steps))
-        # 使用 torch.save 存储 Q 表
+        
         torch.save(self.Q, save_path)
 
         print("Saved Q-table at {}".format(save_path))
