@@ -77,5 +77,6 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    Trainer('DQN').train()
+    # Trainer('DQN').train()
+    Trainer('DDQN').train()
     # Trainer("Q-learning").train()

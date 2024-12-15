@@ -30,8 +30,8 @@ def save_data_and_plot(data, filename,train_type, xlabel, ylabel, path, dpi):
 
 def mode_performance_comparison():
     # Directories and file names
-    # file_names = ['plot_delay_data', 'plot_queue_data', 'plot_reward_data']
-    file_names = ['plot_delay_data']
+    # file_names = ['plot_delay_data', 'plot_queue_data', ]
+    file_names = ['plot_delay_data', 'plot_reward_data', 'plot_queue_data']
     model_paths = ['../models/DQN/DQN_1', '../models/DDQN/DDQN_1', '../models/DDDQN/DDDQN_1', '../models/SAC/SAC_1', "../models/Q-learning/Q-learning_1"]
 
     # Initialize a dictionary to store DataFrames
@@ -61,7 +61,7 @@ def mode_performance_comparison():
         plt.ylabel(file.split('_')[1].title())
         plt.grid(True)
         plt.legend()
-        plt.savefig('./Comparison.png')
+        plt.savefig(f'./Comparison-{file}.png')
         plt.show()
 
 if __name__ == '__main__':
