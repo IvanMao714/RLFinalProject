@@ -9,6 +9,7 @@ Core definitions and functions for all models could be found in the sub-folder "
   - `DQNAgent.py`
   - `SACAgent.py`
 
+Detailed explanations of these models could be found in the comment within our code files. 
 
 Hyperparameters and environment settings for each model are defined in `base_settings.ini` `simulation_settings.ini` `test_setting.ini` `training_settings.ini`.
 
