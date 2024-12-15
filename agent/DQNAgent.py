@@ -71,12 +71,12 @@ class DQNAgent(object):
         """
         with torch.no_grad():
             state_tensor = torch.FloatTensor(state.reshape(1, -1)).to(self.device)
-            if deterministic:
+            if deterministic: # Always select the action with the highest Q-value
                 action = self.q_network(state_tensor).argmax().item()
-            else:
-                if np.random.rand() < self.exploration_noise:
+            else: # Use epsilon-greedy policy
+                if np.random.rand() < self.exploration_noise: # Exploration: random action
                     action = np.random.randint(0, self.action_dim)
-                else:
+                else: # Exploitation: select action with highest Q-value
                     action = self.q_network(state_tensor).argmax().item()
         return action
 
@@ -95,11 +95,14 @@ class DQNAgent(object):
         # Compute the target Q-value
         with torch.no_grad():
             if self.use_double_dqn:
+                # Double DQN: Use online network for action selection and target network for Q-value estimation
                 next_actions = self.q_network(next_states).argmax(dim=1).unsqueeze(-1)
                 max_next_q_values = self.target_q_network(next_states).gather(1, next_actions)
             else:
+                # Standard DQN: Directly use target network for max Q-value estimation
                 max_next_q_values = self.target_q_network(next_states).max(1)[0].unsqueeze(1)
 
+            # Calculate target Q-values: r + gamma * max(Q(s_next, a_next))
             target_q_values = rewards + self.discount_factor * max_next_q_values  # ~dones: not done
 
         # Compute the current Q-values
@@ -107,6 +110,8 @@ class DQNAgent(object):
 
         # Calculate the loss
         q_loss = F.mse_loss(current_q_values, target_q_values)
+
+        # Backpropagation and optimization step
         self.q_network_optimizer.zero_grad()
         q_loss.backward()
         self.q_network_optimizer.step()
@@ -117,6 +122,16 @@ class DQNAgent(object):
         # print("1111111111111")
 
     def predict_one(self, state):
+
+        """
+        Predict Q-values for a single state.
+
+        Args:
+            state (torch.Tensor or np.ndarray): Input state.
+
+        Returns:
+            np.ndarray: Predicted Q-values for all actions.
+        """
         if not isinstance(state, torch.Tensor):
             state = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
         q_values = self.q_network(state)
