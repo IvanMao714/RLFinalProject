@@ -9,20 +9,34 @@ from soupsieve import select
 from RLfinal.envir.generator import TrafficGenerator
 from RLfinal.memory import Memory
 
-# phase codes based on environment.net.xml
-PHASE_NS_GREEN = 0  # action 0 code 00
-PHASE_NS_YELLOW = 1
-PHASE_NSL_GREEN = 2  # action 1 code 01
-PHASE_NSL_YELLOW = 3
-PHASE_EW_GREEN = 4  # action 2 code 10
-PHASE_EW_YELLOW = 5
-PHASE_EWL_GREEN = 6  # action 3 code 11
-PHASE_EWL_YELLOW = 7
+# Phase codes for controlling traffic lights based on the environment's net.xml file
+PHASE_NS_GREEN = 0  # Action 0: North-South straight green
+PHASE_NS_YELLOW = 1  # North-South straight yellow
+PHASE_NSL_GREEN = 2  # Action 1: North-South left-turn green
+PHASE_NSL_YELLOW = 3  # North-South left-turn yellow
+PHASE_EW_GREEN = 4  # Action 2: East-West straight green
+PHASE_EW_YELLOW = 5  # East-West straight yellow
+PHASE_EWL_GREEN = 6  # Action 3: East-West left-turn green
+PHASE_EWL_YELLOW = 7  # East-West left-turn yellow
 
 class Training_Simulation:
     def __init__(self, config, sumo_cmd, agent, memory, model_name):
+
+        """
+        Initialize the training simulation class.
+
+        Args:
+            config (dict): Configuration dictionary containing parameters like max_steps, durations, etc.
+            sumo_cmd (list): Command to initialize the SUMO simulation.
+            agent: RL agent for decision-making (DQN, SAC, or Q-learning).
+            memory: Replay memory for storing transitions.
+            model_name (str): Name of the RL model being trained.
+        """
+        # Initialize agent and memory
         self._Memory = memory
         self._Agent =  agent
+
+        # Traffic and simulation parameters
         self._TrafficGen = TrafficGenerator(config['max_steps'],config['n_cars_generated'])
         self.epsilon = config['epsilon']
         self._gamma = config['gamma']
@@ -33,11 +47,15 @@ class Training_Simulation:
         self._num_actions = config['num_actions']
         self._training_epochs = config['training_epochs']
         self._batch_size = config['batch_size']
+
+        # Simulation tracking variables
         self._step = 0
         self._sumo_cmd = sumo_cmd
         self._reward_store = []
         self._cumulative_wait_store = []
         self._avg_queue_length_store = []
+
+        # Epsilon-greedy exploration parameters
         self._epsilon = config['epsilon']
 
         self.model_name = model_name
@@ -45,18 +63,26 @@ class Training_Simulation:
 
     def run(self, episode):
         """
-        Runs an episode of simulation, then starts a training session
+        Run an episode of the simulation, updating Q-table or neural networks during training.
+
+        Args:
+            episode (int): Current episode index.
+
+        Returns:
+            simulation_time (float): Time taken for the simulation.
+            training_time (float): Time taken for training the agent.
         """
+        # Q-learning specific logic
         if self.model_name == 'Q-learning':
             start_time = timeit.default_timer()
 
-            # generate route file
+            # Generate route file and start SUMO simulation
 
             self._TrafficGen.generate_routefile(seed=episode)
             traci.start(self._sumo_cmd)
             print("Simulating...")
 
-            # 初始化
+            # Initialize episode variables
 
             self._step = 0
             self._waiting_times = {}
@@ -69,37 +95,37 @@ class Training_Simulation:
             old_action = None
 
             while self._step < self._max_steps:
-                # 获取当前状态(80,)的one-hot向量
+                # Get the current state as a one-hot vector
                 current_state = self._get_state()
-                # 将状态转换为整数索引
+                # Convert state to integer index
                 current_s = int(np.argmax(current_state))
 
-                # 计算上一步动作的奖励
+                # Calculate reward based on waiting times
                 current_total_wait = self._collect_waiting_times()
                 # reward = (old_total_wait - current_total_wait) if self._step > 0 else 0
                 reward = -(current_total_wait / max(len(self._waiting_times), 1)) if self._step > 0 else 0
 
-                # 在执行动作前更新Q表(非第一步才更新，因为需要上一状态和动作)
+                # Update Q-table based on the previous state, action, and reward
                 if self._step > 0:
-                    # 将上一步的状态转为整数索引
+                    
                     old_s = int(np.argmax(old_state))
                     a = old_action
                     r = reward
                     s_next = current_s
-                    dw = (self._step >= self._max_steps - 1)  # 在最后一步设为True
+                    dw = (self._step >= self._max_steps - 1)  
 
-                    # Q-learning 每步更新
+                    
                     self._Agent.train(old_s, a, r, s_next, dw)
 
-                # 选择本步动作
+                # Select the next action using epsilon-greedy policy
                 action = self._choose_action(current_state)
 
-                # 如果选择的相位和上一相位不同，则先黄灯
+                # Transition to yellow phase if the action changes
                 if self._step > 0 and old_action is not None and old_action != action:
                     self._set_yellow_phase(old_action)
                     self._simulate(self._yellow_duration)
 
-                # 执行选择的相位(绿灯)
+                # Execute the green phase for the chosen action
                 self._set_green_phase(action)
                 self._simulate(self._green_duration)
 
@@ -107,13 +133,13 @@ class Training_Simulation:
                 # print(
                 #     f"Step: {self._step}, Reward: {reward}, Old Total Wait: {old_total_wait}, Current Total Wait: {current_total_wait}")
 
-                # 更新记录
+                # Update tracking variables
 
                 old_state = current_state
                 old_action = action
                 old_total_wait = current_total_wait
 
-                # 累积奖励（仅在需要分析时才记录负奖励）
+                
 
                 self._sum_neg_reward += reward
 
@@ -125,8 +151,7 @@ class Training_Simulation:
             print("Training...")
             start_time = timeit.default_timer()
 
-            # 对于Q-learning，不需要在episode结束后批量训练，已经在每步更新了
-            # 因此注释掉以下训练循环
+            
             # for _ in range(self._training_epochs):
             #     self._Agent.train() # 不需要
 
