@@ -16,3 +16,8 @@ Hyperparameters and environment settings for each model are defined in `base_set
 ### Training and Testing
 
 The training and testing code are in "trainer.py" and "tester.py", separately. 
+
+### To compare the performance difference between models
+
+Run "visualization.py"
+
